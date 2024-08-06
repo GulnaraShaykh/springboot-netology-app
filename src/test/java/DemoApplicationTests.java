@@ -6,11 +6,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.GenericContainer;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.AfterAll;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+
 
 @SpringBootTest(classes = SpringBootLessonAppApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class DemoApplicationTests  {
+@Testcontainers
+class DemoApplicationTests {
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -27,17 +31,23 @@ class DemoApplicationTests  {
         prodAppContainer.start();
     }
 
+    @AfterAll
+    public static void tearDown() {
+        devAppContainer.stop();
+        prodAppContainer.stop();
+    }
+
     @Test
     void testDevApp() {
         Integer devPort = devAppContainer.getMappedPort(8080);
-        ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:" + devPort, String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:" + devPort + "/profile", String.class);
         assertEquals("Expected response from dev profile", response.getBody());
     }
 
     @Test
     void testProdApp() {
         Integer prodPort = prodAppContainer.getMappedPort(8081);
-        ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:" + prodPort, String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:" + prodPort + "/profile", String.class);
         assertEquals("Expected response from prod profile", response.getBody());
     }
 }
